@@ -1,0 +1,61 @@
+name: Build ESP32 Arduino Lib (full)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout esp32-arduino-lib-builder
+        uses: actions/checkout@v4
+        with:
+          repository: espressif/esp32-arduino-lib-builder
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget curl libssl-dev libncurses-dev flex bison gperf \
+            python3 python3-pip python3-setuptools python3-serial python3-click \
+            python3-cryptography python3-future python3-pyparsing python3-pyelftools \
+            python3-venv cmake ninja-build ccache jq zip
+
+      - name: Cache ESP-IDF tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.espressif
+          key: espressif-${{ hashFiles('esp-idf/tools/idf_tools.py') }}
+          restore-keys: |
+            espressif-
+
+      - name: Build full Arduino lib
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Stage output into esp32-arduino
+        run: |
+          rm -rf esp32-arduino
+          mkdir -p esp32-arduino
+          cp -a out/. esp32-arduino/
+
+      - name: Set date stamp
+        id: stamp
+        run: echo "date=$(date +%d%m%Y)" >> "$GITHUB_OUTPUT"
+
+      - name: Zip folder
+        run: |
+          zip -r "eal-po-${{ steps.stamp.outputs.date }}.zip" esp32-arduino
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v1.0 "eal-po-${{ steps.stamp.outputs.date }}.zip" \
+            --clobber
