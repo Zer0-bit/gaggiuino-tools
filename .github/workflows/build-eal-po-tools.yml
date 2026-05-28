@@ -26,7 +26,7 @@ jobs:
             python3-cryptography python3-future python3-pyparsing python3-pyelftools \
             python3-venv cmake ninja-build ccache jq zip
           ls -la
-          cd esp32-arduino-lib-builder
+          ls -la ./components
 
       - name: Cache ESP-IDF tools
         uses: actions/cache@v4
