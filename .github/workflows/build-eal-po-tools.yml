@@ -25,6 +25,7 @@ jobs:
             python3 python3-pip python3-setuptools python3-serial python3-click \
             python3-cryptography python3-future python3-pyparsing python3-pyelftools \
             python3-venv cmake ninja-build ccache jq zip
+          cd esp32-arduino-lib-builder
 
       - name: Cache ESP-IDF tools
         uses: actions/cache@v4
@@ -39,19 +40,13 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: Stage output into esp32-arduino
-        run: |
-          rm -rf esp32-arduino
-          mkdir -p esp32-arduino
-          cp -a out/. esp32-arduino/
-
       - name: Set date stamp
         id: stamp
         run: echo "date=$(date +%d%m%Y)" >> "$GITHUB_OUTPUT"
 
       - name: Zip folder
         run: |
-          zip -r "eal-po-${{ steps.stamp.outputs.date }}.zip" esp32-arduino
+          zip -r "eal-po-${{ steps.stamp.outputs.date }}.zip" out/tools/esp32-arduino-libs
 
       - name: Upload to release
         env:
